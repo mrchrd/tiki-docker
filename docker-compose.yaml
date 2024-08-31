@@ -1,0 +1,84 @@
+---
+
+services:
+#  elasticsearch:
+#  image: docker.io/elasticsearch:8.15.0
+#    environment:
+#      discovery.type: single-node
+#    restart: unless-stopped
+#    volumes:
+#      - elasticsearch-data:/usr/share/elasticsearch/data
+#  manticore:
+#    image: docker.io/manticoresearch/manticore:6.3.6
+#    environment:
+#      EXTRA: 1
+#    restart: unless-stopped
+#    volumes:
+#      - manticore-plugins:/usr/local/lib/manticore
+#      - manticore-data:/var/lib/manticore
+  mariadb:
+    image: docker.io/mariadb:11.5.2
+    environment:
+      MARIADB_RANDOM_ROOT_PASSWORD: 1
+      MARIADB_DATABASE: tiki
+      MARIADB_USER: tiki
+      MARIADB_PASSWORD: tiki
+    restart: unless-stopped
+    volumes:
+      - mariadb-data:/var/lib/mysql
+#  memcached:
+#    image: docker.io/memcached:1.6.29
+#    restart: unless-stopped
+#  redis:
+#    image: docker.io/redis:7.4.0
+#    restart: unless-stopped
+#    volumes:
+#      - redis-data:/data
+  tiki:
+#    image: ghcr.io/tiki-docker/tiki:latest
+    build:
+      context: .
+    environment:
+      TIKI_ADMIN_PASS: tikiwiki
+      TIKI_DB_HOST: mariadb
+      TIKI_DB_NAME: tiki
+      TIKI_DB_PASS: tiki
+      TIKI_DB_USER: tiki
+      TIKI_DOMAIN: tiki.localhost
+      TIKI_LANG: en
+      TIKI_SENDER_EMAIL: no-reply@tiki.localhost
+      TIKI_TITLE: Tiki
+    restart: unless-stopped
+    volumes:
+      - tiki-data:/var/www
+  cron:
+#    image: ghcr.io/tiki-docker/tiki:latest
+    build:
+      context: .
+    command: cron -f -L 15
+    environment:
+      TIKI_DB_HOST: mariadb
+      TIKI_DB_NAME: tiki
+      TIKI_DB_PASS: tiki
+      TIKI_DB_USER: tiki
+    restart: unless-stopped
+    volumes:
+      - tiki-data:/var/www
+  httpd:
+    image: docker.io/httpd:2.4.62
+    environment:
+      PHP_HOST: tiki
+    ports:
+      - 80:80
+    restart: unless-stopped
+    volumes:
+      - tiki-data:/var/www
+      - ./httpd.conf:/usr/local/apache2/conf/httpd.conf
+
+volumes:
+#  elasticsearch-data:
+#  manticore-data:
+#  manticore-plugins:
+  mariadb-data:
+#  redis-data:
+  tiki-data:
